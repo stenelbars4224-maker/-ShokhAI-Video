@@ -1,0 +1,52 @@
+
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShokhAI-Video</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b1020;color:white;font-family:Arial,sans-serif}
+header{padding:20px;background:#151d32;font-size:24px;font-weight:bold}
+header span{color:#8b7cff}
+main{max-width:700px;margin:45px auto;padding:20px}
+h1{font-size:36px}
+p{color:#b9c3d8;line-height:1.6}
+section{background:#151d32;border:1px solid #303b58;border-radius:16px;padding:22px}
+textarea,select{width:100%;padding:14px;margin:10px 0 20px;background:#0b1020;color:white;border:1px solid #46516c;border-radius:9px;font-size:16px}
+textarea{height:130px}
+button{width:100%;padding:15px;background:#7966ff;color:white;border:0;border-radius:9px;font-size:17px;font-weight:bold}
+#status{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header>ShokhAI<span>-Video</span></header>
+<main>
+<h1>G‘oyangizni videoga aylantiring</h1>
+<p>Sun’iy intellekt yordamida video yaratish loyihasi.</p>
+<section>
+<label for="prompt">Video g‘oyangizni yozing:</label>
+<textarea id="prompt" placeholder="Masalan: Qora Gentra Toshkent ko‘chalarida, kino uslubida..."></textarea>
+<label for="style">Video uslubi:</label>
+<select id="style">
+<option>Kino uslubi</option>
+<option>Realistik</option>
+<option>Multfilm</option>
+<option>Kelajak uslubi</option>
+</select>
+<button onclick="createVideo()">Davom etish</button>
+<p id="status" role="status"></p>
+</section>
+</main>
+<script>
+function createVideo(){
+ const p=document.getElementById('prompt').value.trim();
+ const s=document.getElementById('style').value;
+ const out=document.getElementById('status');
+ if(!p){out.textContent='Avval video g‘oyangizni yozing.';return;}
+ out.textContent='G‘oya: '+p+' | Uslub: '+s+'. Haqiqiy video yaratish uchun AI serverini ulash kerak.';
+}
+</script>
+</body>
+</html>
