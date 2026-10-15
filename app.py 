@@ -1,57 +1,40 @@
 
-import os
-
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import Response
-from pydantic import BaseModel
-from huggingface_hub import InferenceClient
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="ShokhAI-Video API")
 
-
-class VideoRequest(BaseModel):
-    prompt: str
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://stenelbars4224-maker.github.io",
+    ],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
+)
 
 
 @app.get("/")
 def home():
-    return {"status": "ShokhAI-Video server ishlayapti"}
+    return {
+        "status": "ShokhAI-Video server ishlayapti"
+    }
 
 
 @app.post("/generate")
-def generate_video(request: VideoRequest):
-    token = os.getenv("HF_TOKEN")
+def generate_video(data: dict):
+    prompt = data.get("prompt", "").strip()
+    style = data.get("style", "cinematic")
 
-    if not token:
-        raise HTTPException(
-            status_code=500,
-            detail="HF_TOKEN sozlanmagan"
-        )
+    if not prompt:
+        return {
+            "success": False,
+            "message": "Video g'oyasini kiriting"
+        }
 
-    if not request.prompt.strip():
-        raise HTTPException(
-            status_code=400,
-            detail="Video tavsifini kiriting"
-        )
-
-    try:
-        client = InferenceClient(
-            provider="fal-ai",
-            api_key=token
-        )
-
-        video = client.text_to_video(
-            request.prompt,
-            model="Wan-AI/Wan2.2-TI2V-5B"
-        )
-
-        return Response(
-            content=video,
-            media_type="video/mp4"
-        )
-
-    except Exception:
-        raise HTTPException(
-            status_code=502,
-            detail="Video xizmati ishlamadi. Token, modelga kirish huquqi va provayder to‘lovini tekshiring."
-        )
+    return {
+        "success": True,
+        "message": "Server so'rovni qabul qildi",
+        "prompt": prompt,
+        "style": style
+    }
