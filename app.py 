@@ -1,6 +1,13 @@
 
-from fastapi import FastAPI
+import os
+import uuid
+from pathlib import Path
+
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from huggingface_hub import InferenceClient
+from pydantic import BaseModel
 
 app = FastAPI(title="ShokhAI-Video API")
 
@@ -13,28 +20,70 @@ app.add_middleware(
     allow_headers=["Content-Type"],
 )
 
+VIDEO_DIR = Path("/tmp/shokhai-videos")
+VIDEO_DIR.mkdir(parents=True, exist_ok=True)
+
+app.mount(
+    "/videos",
+    StaticFiles(directory=str(VIDEO_DIR)),
+    name="videos",
+)
+
+
+class VideoRequest(BaseModel):
+    prompt: str
+    style: str = "cinematic"
+
 
 @app.get("/")
 def home():
-    return {
-        "status": "ShokhAI-Video server ishlayapti"
-    }
+    return {"status": "ShokhAI-Video server ishlayapti"}
 
 
 @app.post("/generate")
-def generate_video(data: dict):
-    prompt = data.get("prompt", "").strip()
-    style = data.get("style", "cinematic")
+def generate_video(data: VideoRequest):
+    prompt = data.prompt.strip()
 
     if not prompt:
+        raise HTTPException(
+            status_code=400,
+            detail="Video g'oyasini kiriting",
+        )
+
+    token = os.environ.get("HF_TOKEN")
+    if not token:
+        raise HTTPException(
+            status_code=500,
+            detail="HF_TOKEN sozlanmagan",
+        )
+
+    try:
+        client = InferenceClient(
+            provider="fal-ai",
+            api_key=token,
+        )
+
+        video_bytes = client.text_to_video(
+            prompt=f"{prompt}. Visual style: {data.style}",
+            model="Wan-AI/Wan2.2-TI2V-5B",
+        )
+
+        filename = f"{uuid.uuid4().hex}.mp4"
+        output_path = VIDEO_DIR / filename
+        output_path.write_bytes(video_bytes)
+
         return {
-            "success": False,
-            "message": "Video g'oyasini kiriting"
+            "success": True,
+            "message": "Video yaratildi",
+            "video_url": f"/videos/{filename}",
         }
 
-    return {
-        "success": True,
-        "message": "Server so'rovni qabul qildi",
-        "prompt": prompt,
-        "style": style
-    }
+    except Exception:
+        raise HTTPException(
+            status_code=502,
+            detail=(
+                "Video yaratilmadi. "
+                "Hugging Face tokeni, model va "
+                "provayder imkoniyatlarini tekshiring."
+            ),
+        )
